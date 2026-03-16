@@ -185,7 +185,6 @@ async def profissao_buscar(interaction: discord.Interaction):
 async def on_ready():
     init_db()
     try:
-        bot.tree.clear_commands(guild=None)
         synced = await bot.tree.sync()
         print(f"✅ Bot online como {bot.user}")
         print(f"✅ Comandos sincronizados: {len(synced)}")
