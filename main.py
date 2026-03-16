@@ -189,5 +189,5 @@ async def on_ready():
     print(f"Comandos sincronizados: {len(synced)}")
 
 if __name__ == "__main__":
-    threading.Thread(target=run_http, daemon=True).start()
+    threading.Thread(target=run_http_server, daemon=True).start()
     bot.run(TOKEN)
