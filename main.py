@@ -11,6 +11,7 @@ if not TOKEN:
     raise ValueError("DISCORD_TOKEN não encontrado nas variáveis de ambiente")
 
 intents = discord.Intents.default()
+intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 DB_PATH = "bot.db"
