@@ -184,10 +184,12 @@ async def profissao_buscar(interaction: discord.Interaction):
 @bot.event
 async def on_ready():
     init_db()
-    synced = await bot.tree.sync()
-    print(f"✅ Bot online como {bot.user}")
-    print(f"✅ Comandos sincronizados: {len(synced)}")
-
-if __name__ == "__main__":
-    threading.Thread(target=run_http_server, daemon=True).start()
-    bot.run(TOKEN)
+    try:
+        bot.tree.clear_commands(guild=None)
+        synced = await bot.tree.sync()
+        print(f"✅ Bot online como {bot.user}")
+        print(f"✅ Comandos sincronizados: {len(synced)}")
+        for cmd in synced:
+            print(f"/{cmd.name}")
+    except Exception as e:
+        print(f"Erro ao sincronizar comandos: {e}")
