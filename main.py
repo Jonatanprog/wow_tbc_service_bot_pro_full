@@ -7,6 +7,9 @@ from dotenv import load_dotenv
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 
+if not TOKEN:
+    raise ValueError("DISCORD_TOKEN não encontrado nas variáveis de ambiente")
+
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
