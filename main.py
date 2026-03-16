@@ -1,19 +1,19 @@
 import os
+import threading
 import sqlite3
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
 load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
 
+TOKEN = os.getenv("DISCORD_TOKEN")
 if not TOKEN:
     raise ValueError("DISCORD_TOKEN não encontrado nas variáveis de ambiente")
 
-intents = discord.Intents.default()
-intents.message_content = True
-bot = commands.Bot(command_prefix="!", intents=intents)
-
+PORT = int(os.getenv("PORT", "10000"))
 DB_PATH = "bot.db"
 
 PROFESSIONS = [
@@ -70,6 +70,26 @@ def get_crafters_by_profession(profession: str):
     conn.close()
     return rows
 
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/plain; charset=utf-8")
+        self.end_headers()
+        self.wfile.write(b"Bot online")
+
+    def log_message(self, format, *args):
+        return
+
+def run_http_server():
+    server = HTTPServer(("0.0.0.0", PORT), HealthHandler)
+    print(f"HTTP health server na porta {PORT}")
+    server.serve_forever()
+
+intents = discord.Intents.default()
+intents.message_content = True
+
+bot = commands.Bot(command_prefix="!", intents=intents)
+
 class CharacterModal(discord.ui.Modal, title="Cadastrar profissão"):
     character = discord.ui.TextInput(
         label="Nome do personagem",
@@ -88,7 +108,6 @@ class CharacterModal(discord.ui.Modal, title="Cadastrar profissão"):
             character=str(self.character.value),
             profession=self.profession
         )
-
         await interaction.response.send_message(
             f"✅ Profissão cadastrada com sucesso.\n"
             f"**Personagem:** {self.character.value}\n"
@@ -136,7 +155,6 @@ class SearchProfessionSelect(discord.ui.Select):
             return
 
         linhas = [f"**{character}** — <@{user_id}>" for user_id, user_name, character in rows]
-
         await interaction.response.send_message(
             f"## Crafters de {profession}\n" + "\n".join(linhas),
             ephemeral=False
@@ -166,12 +184,10 @@ async def profissao_buscar(interaction: discord.Interaction):
 @bot.event
 async def on_ready():
     init_db()
-    try:
-        bot.tree.clear_commands(guild=None)
-        await bot.tree.sync()
-        print(f"✅ Bot online como {bot.user}")
-        print("✅ Comandos globais antigos removidos e novos sincronizados")
-    except Exception as e:
-        print(f"❌ Erro ao sincronizar comandos: {e}")
+    synced = await bot.tree.sync()
+    print(f"✅ Bot online como {bot.user}")
+    print(f"✅ Comandos sincronizados: {len(synced)}")
 
-bot.run(TOKEN)
+if __name__ == "__main__":
+    threading.Thread(target=run_http_server, daemon=True).start()
+    bot.run(TOKEN)
